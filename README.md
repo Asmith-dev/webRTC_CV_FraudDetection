@@ -1,4 +1,4 @@
-# 🎥 Real-Time WebRTC Video Analysis
+#  Real-Time WebRTC Video Analysis
 
 A plug-and-play server & client that streams webcam video over WebRTC, runs on-the-fly face detection / head-pose / identity checks via OpenCV, MediaPipe, and `face_recognition`, and sends live analysis back to the browser.
 
@@ -19,9 +19,8 @@ A plug-and-play server & client that streams webcam video over WebRTC, runs on-t
 
 ## 🗂️ Project Layout
 ```
-websocket/
-├── webrtc_server.py        # AI-powered WebRTC server
-├── signaling_server.py     # Lightweight signalling WS
+webRTC/
+├── backend_server.py     # Backend control
 ├── ml_detector.py          # Classic ML pipeline
 ├── en_ml.py                # Enhanced MediaPipe/Face-ID pipeline
 ├── en_webrtc_client.html   # Polished front-end
@@ -32,8 +31,7 @@ websocket/
 ## 🚀 Quick Start
 1. Clone & enter the repo  
    ```bash
-   git clone https://github.com/yourname/yourrepo.git
-   cd websocket
+   git clone https://github.com/Asmith-dev/webRTC_CV_FraudDetection.git
    ```
 
 2. Create a virtual environment (recommended)  
@@ -50,19 +48,14 @@ websocket/
    pip install -r requirements.txt
    ```
 
-4. Start signalling server (WebSocket)  
+4. Start backend server (WebSocket , webRTC and ML)  
    ```bash
-   python signaling_server.py        # default ws://0.0.0.0:8765
-   ```
-
-5. Start the ML WebRTC server in a **second** terminal  
-   ```bash
-   python webrtc_server.py           # or python en_server.py for the enhanced pipeline
+   python backend_server.py       # default ws://0.0.0.0:8765
    ```
 
 6. Open the client  
-   * **Option A:** double-click `en_webrtc_client.html`  
-   * **Option B:** serve it: `python -m http.server 8000` → <http://localhost:8000/en_webrtc_client.html>
+   * **Option A:** double-click `client_browser.html`  
+   * **Option B:** serve it: `python -m http.server 8000` → <http://localhost:8000/client_browser.html>
 
 7. Click **"Start"**, allow camera access, enjoy live metrics.
 
@@ -71,7 +64,7 @@ All knobs are centralized in `config.py` / `ml_detector.py` / `en_ml.py`.
 
 ```python
 ML_CONFIG = {
-    "analysis_interval": 5,     # analyse every 5th frame
+    "analysis_interval": 10,     # analyse every 5th frame
     "face_detection": {"model": "mediapipe", "min_detection_confidence": 0.5},
     "head_pose": {"enabled": True, "model": "mediapipe_mesh"},
     "identity_tracking": {"enabled": True, "interval": 20, "tolerance": 0.6},
