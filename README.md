@@ -91,13 +91,6 @@ docker run -p 8765:8765 webrtc-ml
 ```
 Then open the HTML client as usual.
 
-## 🏗️ Roadmap
-- [ ] Emotion recognition
-- [ ] Eye-tracking & gaze estimation
-- [ ] gRPC API option
-- [ ] Docker-compose for STUN/TURN integration
-- [ ] CI pipeline with GitHub Actions
-
 ## 🤝 Contributing
 1. Fork → 🍴  
 2. `git checkout -b feature/thing`  
