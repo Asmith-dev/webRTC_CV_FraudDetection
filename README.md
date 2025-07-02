@@ -3,9 +3,8 @@
 A plug-and-play server & client that streams webcam video over WebRTC, runs on-the-fly face detection / head-pose / identity checks via OpenCV, MediaPipe, and `face_recognition`, and sends live analysis back to the browser.
 
 <p align="center">
-  <img src="docs/demo.gif" width="650" alt="Demo recording">
+  <img src="demo-2.gif" width="650" alt="Demo recording">
 </p>
-
 ---
 
 ## ⚡️ Features
