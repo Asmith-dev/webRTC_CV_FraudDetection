@@ -21,11 +21,10 @@ A plug-and-play server & client that streams webcam video over WebRTC, runs on-t
 ```
 webRTC/
 ├── backend_server.py     # Backend control
-├── ml_detector.py          # Classic ML pipeline
-├── en_ml.py                # Enhanced MediaPipe/Face-ID pipeline
-├── en_webrtc_client.html   # Polished front-end
-├── requirements.txt        # Python deps
-└── README.md               # You're here
+├── ml_detector.py        # Ml pipeline
+├── client_browser.html   #  front-end
+├── requirements.txt      # Python deps
+└── README.md             # You're here
 ```
 
 ## 🚀 Quick Start
@@ -60,11 +59,11 @@ webRTC/
 7. Click **"Start"**, allow camera access, enjoy live metrics.
 
 ## 🔧 Configuration
-All knobs are centralized in `config.py` / `ml_detector.py` / `en_ml.py`.
+All knobs are centralized in `config.py` / `ml_detector.py`.
 
 ```python
 ML_CONFIG = {
-    "analysis_interval": 10,     # analyse every 5th frame
+    "analysis_interval": 10,     # analyse every 10th frame
     "face_detection": {"model": "mediapipe", "min_detection_confidence": 0.5},
     "head_pose": {"enabled": True, "model": "mediapipe_mesh"},
     "identity_tracking": {"enabled": True, "interval": 20, "tolerance": 0.6},
