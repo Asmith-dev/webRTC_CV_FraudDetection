@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Enhanced WebRTC Monitor</title>
+
+  <style>
+    :root {
+      --primary: #2563eb;
+      --danger: #dc2626;
+      --success: #16a34a;
+      --warning: #ca8a04;
+      --background: #f8fafc;
+      --surface: #ffffff;
+      --text: #1e293b;
+      --border: #e2e8f0;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      background: var(--background);
+      color: var(--text);
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: auto;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 24px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 1px 3px rgb(0 0 0 / 0.05);
+      padding: 24px;
+    }
+
+    .video-container {
+      position: relative;
+      background: #000;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    #localVideo {
+      width: 100%;
+      height: auto;
+      max-height: 70vh;
+      display: block;
+    }
+
+    .face-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .face-box {
+      position: absolute;
+      border: 3px solid var(--primary);
+      border-radius: 8px;
+      background: rgba(37 99 235 / 0.1);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%,
+      100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.6;
+      }
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    .status {
+      margin-top: 12px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .status.connected {
+      background: #dcfce7;
+      color: var(--success);
+    }
+
+    .status.connected::before {
+      background: var(--success);
+    }
+
+    .status.disconnected {
+      background: #fee2e2;
+      color: var(--danger);
+    } 
+
+    .status.disconnected::before {
+      background: var(--danger);
+    }
+
+    .status.connecting {
+      background: #fef3c7;
+      color: var(--warning);
+    }
+
+    .status.connecting::before {
+      background: var(--warning);
+    }
+
+    .metric {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px;
+      margin-top: 14px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+
+    .metric-icon {
+      font-size: 30px;
+    }
+
+    .metric.alert {
+      background: #fef2f2;
+      border-color: #fecaca;
+    }
+
+    .logs {
+      margin-top: 16px;
+      height: 220px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 12px;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    .log-entry {
+      padding: 6px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .log-entry:last-child {
+      border-bottom: none;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Video panel -->
+    <div class="card">
+      <h2>🎥 Enhanced Interview Monitor</h2>
+
+      <div class="video-container">
+        <video id="localVideo" autoplay playsinline muted></video>
+        <div id="faceOverlay" class="face-overlay"></div>
+      </div>
+
+      <div class="controls">
+        <button id="startBtn" class="btn btn-primary">📹 Start</button>
+        <button id="stopBtn" class="btn btn-danger" disabled>⏹️ Stop</button>
+      </div>
+
+      <div id="connectionStatus" class="status disconnected">Disconnected</div>
+    </div>
+
+    <!-- Analysis panel -->
+    <div class="card" id="analysisPanel">
+      <h3>📊 Live Analysis</h3>
+
+      <div class="metric" id="faceMetric">
+        <span class="metric-icon">👤</span>
+        <div>
+          <div id="facesLabel">Waiting…</div>
+        </div>
+      </div>
+
+      <div class="metric" id="poseMetric">
+        <span class="metric-icon">🧭</span>
+        <div id="poseLabel">Head-pose: –</div>
+      </div>
+
+      <div class="metric" id="attentionMetric">
+        <span class="metric-icon">🎯</span>
+        <div id="attentionLabel">Attention: –</div>
+      </div>
+
+      <h3>📝 Logs</h3>
+      <div id="logs" class="logs"></div>
+    </div>
+  </div>
+
+  <script>
+    class EnhancedMonitor {
+      constructor() {
+        /* WebRTC / signalling objects */
+        this.ws = null;
+        this.pc = null;
+        this.stream = null;
+
+        /* UI elements */
+        this.video = document.getElementById("localVideo");
+        this.faceOverlay = document.getElementById("faceOverlay");
+        this.startBtn = document.getElementById("startBtn");
+        this.stopBtn = document.getElementById("stopBtn");
+        this.statusEl = document.getElementById("connectionStatus");
+        this.facesLabel = document.getElementById("facesLabel");
+        this.poseLabel = document.getElementById("poseLabel");
+        this.attLabel = document.getElementById("attentionLabel");
+        this.logs = document.getElementById("logs");
+
+        /* Wire-up buttons */
+        this.startBtn.onclick = () => this.start();
+        this.stopBtn.onclick = () => this.stop();
+
+        this.log("Monitor initialised");
+      }
+
+      /* ---------- Utility ---------- */
+      log(msg) {
+        const entry = document.createElement("div");
+        entry.className = "log-entry";
+        entry.textContent = `${new Date().toLocaleTimeString()} | ${msg}`;
+        this.logs.appendChild(entry);
+        this.logs.scrollTop = this.logs.scrollHeight;
+        console.log(msg);
+      }
+
+      setStatus(text, cls) {
+        this.statusEl.textContent = text;
+        this.statusEl.className = `status ${cls}`; //used string literal
+      }
+
+      /* ---------- WebRTC ---------- */
+      async start() {
+        try {
+          this.setStatus("Granting camera…", "connecting");
+
+          this.stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+                width: { ideal: 640 },
+                height: { ideal: 480 },
+                frameRate: { ideal: 20, max: 30 }
+            },
+            audio: false,
+          });
+          this.video.srcObject = this.stream;
+
+          this.setStatus("Connecting…", "connecting");
+
+          this.ws = new WebSocket("ws://localhost:8765");   
+          this.ws.onopen = () => {
+            this.log("WS connected");
+            this.setupPeer();
+          };
+          this.ws.onmessage = (e) => this.handleMessage(JSON.parse(e.data));
+          this.ws.onclose = () => {
+            this.setStatus("Disconnected", "disconnected");
+            this.stop();
+          };
+
+          this.startBtn.disabled = true;
+          this.stopBtn.disabled = false;
+        } catch (err) {
+          this.log(`Start error: ${err}`);
+        }
+      }
+
+      async setupPeer() {
+        this.pc = new RTCPeerConnection({
+          iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+        });
+
+        /* Forward ICE candidates to the signalling server */
+        this.pc.onicecandidate = (ev) => {
+          if (ev.candidate) {
+            this.ws.send(
+              JSON.stringify({
+                type: "ice-candidate",
+                candidate: {
+                  candidate: ev.candidate.candidate,
+                  sdpMid: ev.candidate.sdpMid,
+                  sdpMLineIndex: ev.candidate.sdpMLineIndex,
+                },
+              })
+            );
+          }
+        };
+
+        /* Add local tracks */
+        this.stream.getTracks().forEach((t) => this.pc.addTrack(t, this.stream));
+
+        /* Offer / answer */
+        const offer = await this.pc.createOffer();
+        await this.pc.setLocalDescription(offer);
+        this.ws.send(
+          JSON.stringify({
+            type: "offer",
+            sdp: offer.sdp,
+          })
+        );
+      }
+
+      async handleMessage(msg) {
+        switch (msg.type) {
+          case "answer":
+            await this.pc.setRemoteDescription({
+              type: "answer",
+              sdp: msg.sdp,
+            });
+            break;
+          case "analysis":
+            this.renderAnalysis(msg.data);
+            break;
+          case "connection_established":
+            this.log(`Capabilities: ${JSON.stringify(msg.capabilities)}`);
+            break;
+          case "error":
+            this.log(`Server error: ${msg.message}`);
+            break;
+          default:
+            this.log(`Unknown message: ${JSON.stringify(msg)}`);
+        }
+      } 
+
+      /* ---------- Render analysis ---------- */
+      renderAnalysis(d) {
+        /* Clear overlay */
+        this.faceOverlay.innerHTML = "";
+
+        /* Draw face boxes */
+        if (d.face_positions?.length) {
+          const rect = this.video.getBoundingClientRect();
+          const sx = rect.width / (d.frame_size.width || 640);
+          const sy = rect.height / (d.frame_size.height || 480);
+
+          d.face_positions.forEach((f) => {
+            const box = document.createElement("div");
+            box.className = "face-box";
+            box.style.left = `${f.x * sx}px`;
+            box.style.top = `${f.y * sy}px`;
+            box.style.width = `${f.w * sx}px`;
+            box.style.height = `${f.h * sy}px`;
+            // Visualize movement magnitude (server-provided)
+            const movement = d.movement_px ?? 0;
+            box.style.borderColor = movement > 40 ? '#22c55e' : '#f43f5e';
+            box.title = `Movement: ${movement.toFixed(0)}px`;
+            this.faceOverlay.appendChild(box);
+          });
+        }
+
+        /* Faces label */
+        const n = d.faces_detected || 0;
+        this.facesLabel.textContent =
+          n === 0 ? "No face" : n === 1 ? "1 face" : `${n} faces`;
+
+        /* Head pose */
+        if (d.head_poses?.length) {
+          const p = d.head_poses[0];
+          this.poseLabel.textContent = `Pitch ${p.pitch.toFixed(
+            1
+          )}°  Yaw ${p.yaw.toFixed(1)}°  Roll ${p.roll.toFixed(1)}°`;
+        }
+
+        /* Attention */
+        if (d.enhanced_head_poses?.length) {
+          const ep = d.enhanced_head_poses[0];
+          this.attLabel.textContent = `Attention: ${ep.attention_status.attention_description} (${ep.attention_status.attention_score})`;
+        }
+
+        /* Identity alert */
+        if (d.identity_alert) {
+          this.log("⚠️ Different person detected!", "warn");
+          this.video.style.border = "4px solid var(--danger)";
+        } else {
+          this.video.style.border = "none";
+        }   
+      }
+
+      /* ---------- Tear-down ---------- */
+      async stop() {
+        if (this.ws) {
+          this.ws.close();
+          this.ws = null;
+        }
+        if (this.pc) {
+          this.pc.close();
+          this.pc = null;
+        }
+        if (this.stream) {
+          this.stream.getTracks().forEach((t) => t.stop());
+          this.stream = null;
+        }
+
+        this.startBtn.disabled = false;
+        this.stopBtn.disabled = true;
+        this.setStatus("Disconnected", "disconnected");
+        this.faceOverlay.innerHTML = "";
+      }
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      window.monitor = new EnhancedMonitor();
+    });
+  </script>
+</body>
+</html> 
