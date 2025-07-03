@@ -18,7 +18,6 @@ A plug-and-play server & client that streams webcam video over WebRTC, runs on-t
 
 ## 🗂️ Project Layout
 ```
-webRTC/
 ├── backend_server.py     # Backend control
 ├── ml_detector.py        # Ml pipeline
 ├── client_browser.html   #  front-end
